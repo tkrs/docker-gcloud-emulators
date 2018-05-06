@@ -1,0 +1,38 @@
+version: 2
+jobs:
+  latest:
+    docker:
+      - image: circleci/buildpack-deps:curl
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Install Docker client
+          command: |
+            set -x
+            VER="17.03.0-ce"
+            curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
+            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
+            sudo mv /tmp/docker/* /usr/bin
+      - run: docker build -t gcloud-emulators .
+      - run: |
+          if [[ "${CIRCLE_BRANCH}" = "master" ]]; then
+            docker login quay.io -u ${QUAY_USER} -p ${QUAY_PASS}
+            docker tag gcloud-emulators quay.io/tkrs/gcloud-emulators:latest
+            docker push quay.io/tkrs/gcloud-emulators:latest
+          fi
+workflows:
+  version: 2
+  push:
+    jobs:
+      - latest
+  scheduled:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - latest
