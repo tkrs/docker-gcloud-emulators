@@ -10,14 +10,14 @@ jobs:
           name: Install Docker client
           command: |
             set -x
-            VER="17.03.0-ce"
+            VER="18.06.0-ce"
             curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
             tar -xz -C /tmp -f /tmp/docker-$VER.tgz
             sudo mv /tmp/docker/* /usr/bin
       - run: docker build -t gcloud-emulators .
       - run: |
           if [[ "${CIRCLE_BRANCH}" = "master" ]]; then
-            docker login quay.io -u ${QUAY_USER} -p ${QUAY_PASS}
+            echo ${QUAY_PASS}|docker login quay.io -u ${QUAY_USER} --password-stdin
             docker tag gcloud-emulators quay.io/tkrs/gcloud-emulators:latest
             docker push quay.io/tkrs/gcloud-emulators:latest
           fi
